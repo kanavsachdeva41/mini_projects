@@ -1,0 +1,51 @@
+## Caluculator ( As a pyhton beginner )
+def sum(a,b):
+    return a+b
+
+def diff(a,b):
+    return a-b
+
+def pro(a,b):
+    return a*b
+
+def quo(a,b):
+    if b==0:
+        print("Error! Division not possible")
+    return a/b
+
+def pow(a,b):
+    return a**b
+
+while True:
+    print("\n---Calculator---\n")
+    print("1.Sum\n2.Difference\n3.Product\n4.Quotient\n5.Power\n6.Exit")
+
+    choice=input("Enter choice from (1-6):")
+
+    if choice=='6':
+        print("Exiting calculator")
+        break
+    
+    if choice in ['1','2','3','4','5']:
+        try:
+            a = int(input("Enter first number:"))
+            b = int(input("Enter second number:"))
+
+            if choice=='1':
+                print("Sum:", sum(a,b))
+            elif choice=='2':
+                print("Difference:", diff(a,b))
+            elif choice=='3':
+                print("Product:", pro(a,b))
+            elif choice=='4':
+                print("Quotient", quo(a,b))
+            elif choice=='5':
+                print(f"{a} raise to {b} power: {pow(a,b)}")
+        except ValueError:
+            print("Invalid input! Enter numbers only")
+    else:
+        print("Invalid choice! Enter choice between (1 to 6)")
+
+
+    
+
