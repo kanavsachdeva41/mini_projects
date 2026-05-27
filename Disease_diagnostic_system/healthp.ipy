@@ -1,0 +1,203 @@
+## Health diagnostic system
+import tkinter as tk # makes GUI (windows,buttons)
+from tkinter import messagebox
+import pandas as pd # reads dataset (csv file)
+import numpy as np # Helps with arithmetic operations
+import matplotlib.pyplot as plt # visual representation (graphs, charts,etc.)
+import sqlite3 as sq # helps to connect with database and stores information in the database
+
+#loading data set
+
+df = pd.read_csv('symptom_disease_dataset.csv')
+print(df.head())
+
+disease_count = df['Disease'].value_counts()
+
+# plot bar graph
+
+plt.figure()
+disease_count.plot(kind='bar')
+
+plt.xlabel("Disease")
+plt.ylabel("Count")
+plt.title("Disease frequency Bar Graph (dataset)")
+
+plt.xticks(rotation=0)
+plt.show()
+
+# window creation
+
+window = tk.Tk()
+window.title("Health Diagnostic System")
+window.geometry("500x500") #dimentional program
+
+#basic design label-text, entry-input box
+
+lname = tk.Label(window,text="Enter name: ")
+lname.pack(anchor='w')
+
+ename = tk.Entry(window)
+ename.pack(anchor='w')
+
+lage= tk.Label(window,text="Enter age:")
+lage.pack(anchor='w')
+
+eage=tk.Entry(window)
+eage.pack(anchor='w')
+
+lgen=tk.Label(window,text="Enter gender: ")
+lgen.pack(anchor='w')
+
+egen=tk.Entry(window)
+egen.pack(anchor='w')
+
+lbg=tk.Label(window,text="Enter blood group: ")
+lbg.pack(anchor='w')
+
+ebg=tk.Entry(window)
+ebg.pack(anchor='w')
+
+ladd=tk.Label(window,text="Enter address: ")
+ladd.pack(anchor='w')
+
+eadd=tk.Entry(window)
+eadd.pack(anchor='w')
+
+lph=tk.Label(window,text="Enter phone number: ")
+lph.pack(anchor='w')
+
+eph=tk.Entry(window)
+eph.pack(anchor='w')
+
+lsym = tk.Label(window,text = "Enter symptoms (seperated by comma): ")
+lsym.pack(anchor='w')
+
+esym=tk.Entry(window,width=50)
+esym.pack(anchor='w')
+
+lresult = tk.Label(window, text="", fg="blue")
+lresult.pack(pady=10)
+
+ladvice =tk.Label(window, text="", fg="blue")
+ladvice.pack(pady=10)
+
+#old diagnose - it checks only one time and stops as soon as it gets its first match
+
+# def diagnose():
+#     symptoms = esym.get().lower().split(",")
+
+#     for index,row in df.iterrows():
+#         disease=row['Disease']
+#         dsym = str(row['Symptoms_List']).lower().split(",")
+
+#         if set(symptoms).intersection(set(dsym)):
+#             print("Possible disease:", disease)
+#             lresult.config(text="Possible disease: " + disease)
+#             return
+        
+#         print(dsym)
+#         print(symptoms)
+        
+#     lresult.config(text="No disease found")
+
+advice_dict = {
+    "COVID-19": "Isolate, drink fluids, monitor oxygen, consult doctor",
+    "Chickenpox": "Avoid scratching, maintain hygiene, isolate",
+    "Malaria": "Take medicines, avoid mosquitoes, rest",
+    "Flu": "Rest, fluids, paracetamol",
+    "Dengue": "Drink fluids, monitor platelets, see doctor",
+    "Food Poisoning": "ORS, light food, hydration",
+    "Sinusitis": "Steam inhalation, warm compress",
+    "Common Cold": "Rest, warm fluids, steam",
+    "Migraine": "Avoid stress, dark room rest",
+    "Typhoid": "Antibiotics, clean water, hygiene"
+}
+
+# new diagnose - checks all the match symptoms and accordingly gives the disease output
+
+def diagnose():
+    symptoms = [s.strip().lower() for s in esym.get().split(",")]
+
+    best_match = None
+    max_match = 0
+
+    for index, row in df.iterrows():
+        disease = row['Disease']
+        dsym = [s.strip().lower() for s in str(row['Symptoms_List']).split(",")]
+
+        # count matching symptoms
+        match_count = len(set(symptoms).intersection(set(dsym)))
+
+        if match_count > max_match:
+            max_match = match_count
+            best_match = disease
+
+    if best_match and max_match > 0:
+        lresult.config(text=f"Possible disease: {best_match}\n\nAdvice: {advice_dict.get(best_match,'No advice')}")
+    else:
+        lresult.config(text="No disease found")
+
+        # Creation of a database to store patient detials
+
+    connec = sq.connect("Health.db") ## helps in connecting the database
+    cursor = connec.cursor()
+
+    # Creation of table 
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS patients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        age TEXT,
+        gender TEXT,
+        blood_group TEXT,
+        address TEXT,
+        phone TEXT,
+        symptoms TEXT,
+        disease TEXT
+        )
+        """)
+
+    # Helps in inserting data
+    
+    cursor.execute(
+        """
+        INSERT INTO patients 
+        (name, age, gender, blood_group, address, phone, symptoms, disease)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (
+        ename.get(),
+        eage.get(),
+        egen.get(),
+        ebg.get(),
+        eadd.get(),
+        eph.get(),
+        ", ".join(symptoms),   # convert list to string
+        best_match
+    ))
+
+    connec.commit() # Save the changes 
+    connec.close() 
+
+btn = tk.Button(window,text="Diagnose",command=diagnose)
+btn.pack(pady=20)
+
+window.mainloop() #keeps running
+
+#Display a message with beep of successful data insertion in database file(health.db) of patients
+
+messagebox.showinfo("Success", "Data saved successfully!")
+
+## For printing the database file
+con = sq.connect("Health.db")
+cur = con.cursor()
+
+cur.execute("SELECT * FROM patients")
+rows = cur.fetchall()
+
+for row in rows:
+    print(row)
+
+con.close()
+
+
